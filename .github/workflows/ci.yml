@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Build (GitHub Pages base path)
+        run: npm run build
+        env:
+          BASE_PATH: /propchallenger/
+      - name: Build (custom-domain apex base path)
+        run: npm run build
+        env:
+          BASE_PATH: /
+      - name: Independent Python reference (exact rationals)
+        run: python3 reference/fixtures_reference.py
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
